@@ -33,6 +33,13 @@ Let the agent pay. Never let it see.
 
 Read FRONTEND_SPEC.md before touching any class. Read APP_BLUEPRINT.md before touching any contract or route.
 
+## Repo hygiene
+
+Do not commit the `reference/` directory (it is a clone of the z-tenant-flight example). It is in `.gitignore`.
+Do not add `.env` or `web/.env.local` to git — they contain secrets or local config.
+Use `--target x86_64-pc-windows-gnu` when running `cargo test` (wasm32-wasip2 cannot run natively on Windows).
+Always run `npm run bridge` in its own shell before `npm run dev --workspace web`; the two processes are coupled on Windows.
+
 ## Stack
 
 | Layer | Technology |
@@ -41,9 +48,9 @@ Read FRONTEND_SPEC.md before touching any class. Read APP_BLUEPRINT.md before to
 | Motion | motion/react, GSAP + ScrollTrigger for the pan only |
 | Icons | Material Icons CDN or inline SVG |
 | MCP | Node.js, TypeScript |
-| T3N | `@terminal3/t3n-sdk` **52** |
+| T3N | `@terminal3/t3n-sdk` **5.17.0** (pinned, BUILD_GUIDE says sdk 52) |
 | Contract | Rust → WASM TEE, `http-with-placeholders` |
-| Payments | Stripe test / Agent Connect |
+| Payments | Lemonsqueezy (default rail, via PAYMENT_API_KEY in secrets map) |
 | DB | None. KV maps + `getActivityLog()` |
 | Host | Vercel (web) |
 
@@ -54,10 +61,13 @@ latch/
 ├── contracts/                 TEE contract (Rust/WASM)
 ├── mcp/                       MCP server
 │   └── src/
-│       ├── index.ts
-│       ├── tools/pay.ts
-│       ├── tools/revoke.ts
-│       └── tools/audit.ts
+│       ├── index.ts            MCP tools: ap.pay, grants.revoke, audit.tail
+│       │   ├── t3n.ts              live TenantClient + AgentClient SDK calls
+│       │   ├── env.ts              LatchEnv config from .env + process.env
+│       │   ├── register.ts         idempotent registration (contract + maps + allowlist)
+│       │   └── server.ts           plain-Node bridge (127.0.0.1:8787, SDK avoids bundler breakage)
+├── bridge.ts  (in web/src/lib/)  Next.js proxy to bridge
+├── rateLimit.ts  (in web/src/lib/)
 ├── web/
 │   └── src/
 │       ├── app/

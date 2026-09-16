@@ -1,0 +1,57 @@
+/// z-latch-pay WIT world — Latch autopay guard.
+///
+/// Imports required host capabilities:
+///   - tenant-context:         tenant DID, so KV map names are derived at runtime
+///   - logging:                decision lines for the node log (never PII)
+///   - kv-store:               reads the `latch-policy` allowlist map and the
+///                             `secrets` map for the payment rail key
+///   - http-with-placeholders: the outbound payment instruction — the body
+///                             carries a `{{profile.vendor.iban}}` marker the
+///                             host resolves from the calling user's profile at
+///                             dispatch time, so the payee IBAN never enters
+///                             WASM memory.
+///
+/// The payment rail is read from `z:<tid>:secrets` under `payment_rail`
+/// (`lemonsqueezy` or `stripe`), with the API key under `payment_api_key`.
+/// Egress hosts must be on the delegation grant's `allowed_hosts`.
+package z:latch-pay@0.1.0;
+
+world latch-pay {
+    import host:tenant/tenant-context@1.0.0;
+    import host:interfaces/logging@2.1.0;
+    import host:interfaces/kv-store@2.1.0;
+    import host:interfaces/http-with-placeholders@2.1.0;
+
+    export contracts;
+}
+
+interface contracts {
+    /// Standard 3-field envelope used by all contracts callable from the node.
+    /// `input`        — JSON-serialized request payload specific to the function.
+    /// `user-profile` — always None for tenant contracts (hardcoded at dispatch).
+    /// `context`      — JSON-serialized DynamicContext (node-minted, trusted).
+    record generic-input {
+        input:        option<list<u8>>,
+        user-profile: option<list<u8>>,
+        context:      option<list<u8>>,
+    }
+
+    /// Decide and (if allowed) execute an invoice payment.
+    ///
+    /// Input  (JSON): { invoice_id, vendor, amount, currency, memo? }
+    ///   - `vendor` is the non-PII allowlist key (e.g. `acme-cloud`), NOT the
+    ///     payee account detail.
+    ///   - The payee IBAN is never an argument: the payment body templates the
+    ///     `{{profile.vendor.iban}}` marker and the host resolves it from the
+    ///     calling user's profile, so plaintext payee data never enters WASM.
+    ///
+    /// Output (JSON): { result: "approve" | "deny", reason?, invoice_id,
+    ///                  vendor, amount, currency, mode, payment_ref?,
+    ///                  checkout_url? }
+    ///   - `deny` reasons: `payee_mismatch` (vendor not on the allowlist —
+    ///     checked BEFORE any egress), `limit_exceeded`, `currency_mismatch`,
+    ///     `rail_unconfigured`, `missing_payee_profile`, `egress_denied`.
+    ///   - `approve` carries only opaque rail references (payment id or
+    ///     checkout url) — never the resolved IBAN.
+    pay-invoice: func(req: generic-input) -> result<list<u8>, string>;
+}

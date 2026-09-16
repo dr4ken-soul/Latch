@@ -5,7 +5,8 @@
     "dev": "npm run dev --workspace web",
     "build": "npm run build --workspace web",
     "lint": "npm run lint --workspace web",
-    "mcp": "npm run dev --workspace mcp"
+    "mcp": "npm run dev --workspace mcp",
+    "bridge": "npm run bridge --workspace mcp"
   },
   "workspaces": ["web", "mcp"]
 }

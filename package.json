@@ -1,0 +1,11 @@
+{
+  "name": "latch",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --workspace web",
+    "build": "npm run build --workspace web",
+    "lint": "npm run lint --workspace web",
+    "mcp": "npm run dev --workspace mcp"
+  },
+  "workspaces": ["web", "mcp"]
+}

@@ -1,0 +1,4 @@
+import Link from 'next/link';
+
+/** Renders the site footer and submission links. */
+export default function Footer() { return <footer className="w-full bg-[var(--bg-primary)] border-t border-[var(--border-subtle)]"><div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16 py-10 md:py-14 flex flex-col md:flex-row md:items-end md:justify-between gap-8"><div><div className="font-heading text-[1.5rem] tracking-tight">Latch</div><p className="mt-2 text-sm text-[var(--text-muted)]">Built for the Terminal 3 agent challenge.</p></div><div className="flex flex-wrap gap-6 text-sm text-[var(--text-secondary)]"><Link href="/app">Console</Link><a href="https://github.com/dr4ken-soul/Latch">GitHub</a><a href="https://docs.terminal3.io/developers/adk/get-started/quickstart">Docs</a><a href="https://x.com/terminal3io">X</a></div></div></footer>; }
